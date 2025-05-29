@@ -2,166 +2,147 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Re-Gen AI Image Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Re-Gen AI Chat & Image Generator</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-    .container { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 500px; width: 100%; }
-    h1 { margin-top: 0; text-align: center; }
-    form { display: flex; flex-direction: column; gap: 1rem; }
-    label { font-weight: bold; }
-    input[type="text"], select, input[type="number"] { padding: 0.5rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 4px; }
-    button { padding: 0.75rem; font-size: 1rem; border: none; border-radius: 4px; background: #007bff; color: white; cursor: pointer; }
-    button:disabled { background: #aaa; cursor: not-allowed; }
-    .result { margin-top: 1.5rem; text-align: center; }
-    .result img { max-width: 100%; border-radius: 4px; }
-    .download-btn { margin-top: 0.5rem; display: inline-block; text-decoration: none; background: #28a745; color: white; padding: 0.5rem 1rem; border-radius: 4px; }
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    .container { background: white; width: 400px; max-height: 90vh; display: flex; flex-direction: column; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .header { background: #007bff; color: white; padding: 1rem; text-align: center; }
+    .messages { flex: 1; padding: 1rem; overflow-y: auto; background: #fafafa; }
+    .message { display: flex; flex-direction: column; margin-bottom: 1rem; }
+    .message.user { align-items: flex-end; }
+    .message.bot { align-items: flex-start; }
+    .bubble { display: inline-block; padding: 0.5rem 1rem; border-radius: 16px; max-width: 80%; position: relative; }
+    .message.user .bubble { background: #007bff; color: white; }
+    .message.bot .bubble { background: #eee; color: #333; }
+    .timestamp { font-size: 0.75rem; color: #999; margin-top: 0.25rem; }
+    .avatar { width: 24px; height: 24px; border-radius: 50%; margin-right: 8px; }
+    .msg-content { display: flex; align-items: center; }
+    .msg-content img { max-width: 80%; border-radius: 8px; margin-top: 0.5rem; }
+    .input-area { display: flex; align-items: center; border-top: 1px solid #ccc; padding: 0.5rem; }
+    .input-area input[type="text"] { flex: 1; border: 1px solid #ccc; border-radius: 4px; padding: 0.5rem; font-size: 1rem; }
+    .input-area input[type="file"] { margin-left: 0.5rem; }
+    .input-area button { border: none; background: #007bff; color: white; padding: 0 1rem; margin-left: 0.5rem; cursor: pointer; border-radius: 4px; }
+    .input-area button:disabled { background: #aaa; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Re-Gen AI Image Generator</h1>
-    <form id="image-form">
-      <div>
-        <label for="apiSelect">Choose Style/API:</label>
-        <select id="apiSelect" required>
-          <option value="flux">Flux Image AI</option>
-          <option value="cartoon">Cartoon Yourself</option>
-        </select>
-      </div>
-      <div>
-        <label for="prompt">Prompt:</label>
-        <input type="text" id="prompt" placeholder="Enter your prompt" required />
-      </div>
-
-      <div id="fluxParams">
-        <label for="width">Width:</label>
-        <input type="number" id="width" value="1024" required />
-        <label for="height">Height:</label>
-        <input type="number" id="height" value="1024" required />
-        <label for="seed">Seed:</label>
-        <input type="number" id="seed" value="918440" required />
-        <label for="model">Model:</label>
-        <input type="text" id="model" value="flux" required />
-      </div>
-
-      <div id="imageUrlContainer" style="display:none;">
-        <label for="imageUrl">Source Image URL:</label>
-        <input type="text" id="imageUrl" placeholder="https://upload.wikimedia.org/wikipedia/commons/a/a6/Anonymous_emblem.svg" />
-      </div>
-
-      <button type="submit" id="generateBtn">Generate Image</button>
-    </form>
-    <div class="result" id="result"></div>
+    <div class="header"><h2>Re-Gen AI Chat</h2></div>
+    <div class="messages" id="messages"></div>
+    <div class="input-area">
+      <input type="text" id="input" placeholder="Type a message or image prompt..." />
+      <input type="file" id="fileInput" accept="image/*" />
+      <button id="sendBtn">Send</button>
+      <button id="imgBtn">Image</button>
+    </div>
   </div>
 
   <script>
-    const apiSelect = document.getElementById('apiSelect');
-    const imageUrlContainer = document.getElementById('imageUrlContainer');
-    const fluxParams = document.getElementById('fluxParams');
-    const resultEl = document.getElementById('result');
+    const messagesEl = document.getElementById('messages');
+    const inputEl = document.getElementById('input');
+    const fileEl = document.getElementById('fileInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const imgBtn = document.getElementById('imgBtn');
 
-    function toggleParams() {
-      const style = apiSelect.value;
-      imageUrlContainer.style.display = style === 'cartoon' ? 'block' : 'none';
-      fluxParams.style.display = style === 'flux' ? 'block' : 'none';
+    const CHAT_API_URL = 'https://cheapest-gpt-4-turbo-gpt-4-vision-chatgpt-openai-ai-api.p.rapidapi.com/v1/chat/completions';
+    const FLUX_API_URL = 'https://ai-text-to-image-generator-flux-free-api.p.rapidapi.com/aaaaaaaaaaaaaaaaaiimagegenerator/fluximagegenerate/generateimage.php';
+    const HEADERS_CHAT = {
+      'Content-Type': 'application/json',
+      'x-rapidapi-host': 'cheapest-gpt-4-turbo-gpt-4-vision-chatgpt-openai-ai-api.p.rapidapi.com',
+      'x-rapidapi-key': '82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd'
+    };
+    const HEADERS_FLUX = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'x-rapidapi-host': 'ai-text-to-image-generator-flux-free-api.p.rapidapi.com',
+      'x-rapidapi-key': '82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd'
+    };
+
+    function timestamp() {
+      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    apiSelect.addEventListener('change', toggleParams);
-    toggleParams();
-
-    function extractImageUrlFromJson(data) {
-      const candidates = [
-        data.imageUrl,
-        data.resultUrl,
-        Array.isArray(data.output) && data.output[0],
-        data.url,
-        Array.isArray(data.urls) && data.urls[0],
-        Array.isArray(data.data) && data.data[0],
-        data.image,
-        data.img,
-        data.base64 && `data:image/png;base64,${data.base64}`,
-      ];
-      return candidates.find(x => typeof x === 'string' && x.length > 0);
-    }
-
-    document.getElementById('image-form').addEventListener('submit', async e => {
-      e.preventDefault();
-      resultEl.innerHTML = 'Generating...';
-
-      const style = apiSelect.value;
-      const prompt = document.getElementById('prompt').value.trim();
-
-      let url, options;
-      if (style === 'cartoon') {
-        const imageUrl = document.getElementById('imageUrl').value.trim();
-        if (!imageUrl) {
-          alert('Please provide a source image URL for Cartoon Yourself.');
-          return;
-        }
-        url = 'https://cartoon-yourself.p.rapidapi.com/facebody/api/portrait-animation/portrait-animation';
-        const body = new URLSearchParams();
-        body.set('image_url', imageUrl); // Ensure only one entry
-        options = {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'x-rapidapi-host': 'cartoon-yourself.p.rapidapi.com',
-            'x-rapidapi-key': '82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd'
-          },
-          body: body.toString()
-        };
+    function appendMessage(role, content, isImage=false) {
+      const msg = document.createElement('div');
+      msg.className = 'message ' + (role === 'user' ? 'user' : 'bot');
+      const wrapper = document.createElement('div');
+      wrapper.className = 'msg-content';
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      if (isImage) {
+        const img = document.createElement('img'); img.src = content;
+        bubble.appendChild(img);
       } else {
-        const width = document.getElementById('width').value;
-        const height = document.getElementById('height').value;
-        const seed = document.getElementById('seed').value;
-        const model = document.getElementById('model').value;
-        url = 'https://ai-text-to-image-generator-flux-free-api.p.rapidapi.com/aaaaaaaaaaaaaaaaaiimagegenerator/fluximagegenerate/generateimage.php';
-        const body = new URLSearchParams();
-        body.append('prompt', prompt);
-        body.append('width', width);
-        body.append('height', height);
-        body.append('seed', seed);
-        body.append('model', model);
-        options = {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'x-rapidapi-host': 'ai-text-to-image-generator-flux-free-api.p.rapidapi.com',
-            'x-rapidapi-key': '82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd'
-          },
-          body: body.toString()
-        };
+        bubble.textContent = content;
       }
+      wrapper.appendChild(bubble);
+      msg.appendChild(wrapper);
+      const timeEl = document.createElement('div');
+      timeEl.className = 'timestamp';
+      timeEl.textContent = timestamp();
+      msg.appendChild(timeEl);
+      messagesEl.appendChild(msg);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
 
+    async function sendChat(prompt, imageBase64=null) {
+      appendMessage('user', imageBase64 ? '📷 Sent an image' : prompt);
+      sendBtn.disabled = imgBtn.disabled = true;
       try {
-        const response = await fetch(url, options);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const messagesPayload = [{ role: 'user', content: prompt }];
+        if (imageBase64) messagesPayload.push({ role: 'user', content: imageBase64 });
+        const payload = { messages: messagesPayload, model: 'gpt-4o', max_tokens: 100, temperature: 0.9 };
+        const res = await fetch(CHAT_API_URL, { method: 'POST', headers: HEADERS_CHAT, body: JSON.stringify(payload) });
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        const reply = data.choices?.[0]?.message?.content || 'No response';
+        appendMessage('bot', reply);
+      } catch (e) {
+        appendMessage('bot', 'Error: ' + e.message);
+      }
+      sendBtn.disabled = imgBtn.disabled = false;
+    }
 
-        const contentType = response.headers.get('Content-Type') || '';
-        let imageSrc;
+    async function generateImage(prompt) {
+      appendMessage('user', prompt);
+      sendBtn.disabled = imgBtn.disabled = true;
+      try {
+        const params = new URLSearchParams({ prompt, width: '1024', height: '1024', seed: '918440', model: 'flux' });
+        const res = await fetch(FLUX_API_URL, { method: 'POST', headers: HEADERS_FLUX, body: params.toString() });
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        const url = data.imageUrl || data.resultUrl || (data.output && data.output[0]);
+        appendMessage('bot', url, true);
+      } catch (e) {
+        appendMessage('bot', 'Error: ' + e.message);
+      }
+      sendBtn.disabled = imgBtn.disabled = false;
+    }
 
-        if (contentType.includes('application/json')) {
-          const data = await response.json();
-          imageSrc = extractImageUrlFromJson(data);
-          if (!imageSrc) {
-            console.warn('No URL in JSON, falling back to blob');
-            const blob = await response.blob();
-            imageSrc = URL.createObjectURL(blob);
-          }
-        } else {
-          const blob = await response.blob();
-          imageSrc = URL.createObjectURL(blob);
-        }
+    sendBtn.addEventListener('click', () => {
+      const text = inputEl.value.trim();
+      if (!text && !fileEl.files.length) return;      
+      if (fileEl.files.length) {
+        const reader = new FileReader();
+        reader.onload = () => sendChat(text || ' ', reader.result);
+        reader.readAsDataURL(fileEl.files[0]);
+      } else {
+        sendChat(text);
+      }
+      inputEl.value = '';
+      fileEl.value = '';
+    });
 
-        resultEl.innerHTML = `
-          <img src="${imageSrc}" alt="Generated Image" />
-          <br/>
-          <a href="${imageSrc}" download="generated.png" class="download-btn">Download Image</a>
-        `;
-      } catch (err) {
-        console.error(err);
-        resultEl.innerHTML = 'Error: ' + err.message;
+    imgBtn.addEventListener('click', () => {
+      const text = inputEl.value.trim(); if (!text) return;
+      generateImage(text);
+      inputEl.value = '';
+      fileEl.value = '';
+    });
+
+    inputEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault(); sendBtn.click();
       }
     });
   </script>
