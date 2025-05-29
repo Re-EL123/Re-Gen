@@ -58,6 +58,7 @@
     const apiSelect = document.getElementById('apiSelect');
     const imageUrlContainer = document.getElementById('imageUrlContainer');
     const fluxParams = document.getElementById('fluxParams');
+    const resultEl = document.getElementById('result');
 
     function toggleParams() {
       const style = apiSelect.value;
@@ -69,15 +70,18 @@
 
     document.getElementById('image-form').addEventListener('submit', async e => {
       e.preventDefault();
+      resultEl.innerHTML = 'Generating...';
+
       const style = apiSelect.value;
       const prompt = document.getElementById('prompt').value.trim();
-      const resultEl = document.getElementById('result');
-      resultEl.innerHTML = 'Generating...';
 
       let url, options;
       if (style === 'ghibli') {
         const imageUrl = document.getElementById('imageUrl').value.trim();
-        if (!imageUrl) return alert('Please provide a source image URL for Ghibli style.');
+        if (!imageUrl) {
+          alert('Please provide a source image URL for Ghibli style.');
+          return;
+        }
         url = 'https://ghibli-image-generator-api-open-ai-4o-image-generation-free.p.rapidapi.com/aaaaaaaaaaaaaaaaaiimagegenerator/ghibli/generate.php';
         options = {
           method: 'POST',
@@ -114,14 +118,38 @@
 
       try {
         const response = await fetch(url, options);
-        if (!response.ok) throw new Error(`Network response was not ok: ${response.status}`);
-        const data = await response.json();
-        const imageSrc = data.imageUrl || data.resultUrl || (data.output && data.output[0]);
-        resultEl.innerHTML = `<img src="${imageSrc}" alt="Generated Image" /><br/><a href="${imageSrc}" download="generated.png" class="download-btn">Download Image</a>`;
+        if (!response.ok) {
+          throw new Error(`Network response was not ok: ${response.status}`);
+        }
+
+        // Detect content type so we don't try to parse a blob as JSON
+        const contentType = response.headers.get('Content-Type') || '';
+        let imageSrc;
+
+        if (contentType.includes('application/json')) {
+          // API returned JSON with a URL inside
+          const data = await response.json();
+          imageSrc = data.imageUrl || data.resultUrl || (data.output && data.output[0]);
+          if (!imageSrc) {
+            throw new Error('No image URL found in JSON response.');
+          }
+        } else {
+          // API returned a raw image blob (JPEG/PNG/etc)
+          const blob = await response.blob();
+          imageSrc = URL.createObjectURL(blob);
+        }
+
+        resultEl.innerHTML = `
+          <img src="${imageSrc}" alt="Generated Image" />
+          <br/>
+          <a href="${imageSrc}" download="generated.png" class="download-btn">Download Image</a>
+        `;
       } catch (err) {
+        console.error(err);
         resultEl.innerHTML = 'Error: ' + err.message;
       }
     });
   </script>
 </body>
-</html>
+  </html>
+  
