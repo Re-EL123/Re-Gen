@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Re-Gen AI Image Generator</title>
   <style>
     body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
@@ -26,7 +26,7 @@
         <label for="apiSelect">Choose Style/API:</label>
         <select id="apiSelect" required>
           <option value="flux">Flux Image AI</option>
-          <option value="ghibli">Studio Ghibli Echo</option>
+          <option value="cartoon">Cartoon Yourself</option>
         </select>
       </div>
       <div>
@@ -47,8 +47,9 @@
 
       <div id="imageUrlContainer" style="display:none;">
         <label for="imageUrl">Source Image URL:</label>
-        <input type="text" id="imageUrl" placeholder="https://example.com/your-image.png" />
+        <input type="text" id="imageUrl" placeholder="https://example.com/your-image.jpg" />
       </div>
+
       <button type="submit" id="generateBtn">Generate Image</button>
     </form>
     <div class="result" id="result"></div>
@@ -62,14 +63,14 @@
 
     function toggleParams() {
       const style = apiSelect.value;
-      imageUrlContainer.style.display = style === 'ghibli' ? 'block' : 'none';
+      imageUrlContainer.style.display = style === 'cartoon' ? 'block' : 'none';
       fluxParams.style.display = style === 'flux' ? 'block' : 'none';
     }
+
     apiSelect.addEventListener('change', toggleParams);
     toggleParams();
 
     function extractImageUrlFromJson(data) {
-      // check all likely fields
       const candidates = [
         data.imageUrl,
         data.resultUrl,
@@ -77,9 +78,9 @@
         data.url,
         Array.isArray(data.urls) && data.urls[0],
         Array.isArray(data.data) && data.data[0],
-        data.image,             // sometimes returned as ‘image’
-        data.img,               // or ‘img’
-        data.base64 && `data:image/png;base64,${data.base64}`, // if base64 payload
+        data.image,
+        data.img,
+        data.base64 && `data:image/png;base64,${data.base64}`,
       ];
       return candidates.find(x => typeof x === 'string' && x.length > 0);
     }
@@ -92,24 +93,25 @@
       const prompt = document.getElementById('prompt').value.trim();
 
       let url, options;
-      if (style === 'ghibli') {
+      if (style === 'cartoon') {
         const imageUrl = document.getElementById('imageUrl').value.trim();
         if (!imageUrl) {
-          alert('Please provide a source image URL for Ghibli style.');
+          alert('Please provide a source image URL for Cartoon Yourself.');
           return;
         }
-        url = 'https://ghibli-image-generator-api-open-ai-4o-image-generation-free.p.rapidapi.com/aaaaaaaaaaaaaaaaaiimagegenerator/ghibli/generate.php';
+        url = 'https://cartoon-yourself.p.rapidapi.com/facebody/api/portrait-animation/portrait-animation';
+        const body = new URLSearchParams();
+        body.append('image_url', imageUrl);
         options = {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'x-rapidapi-host': 'ghibli-image-generator-api-open-ai-4o-image-generation-free.p.rapidapi.com',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'x-rapidapi-host': 'cartoon-yourself.p.rapidapi.com',
             'x-rapidapi-key': '82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd'
           },
-          body: JSON.stringify({ prompt, filesUrl: [imageUrl], size: '1:1' })
+          body: body.toString()
         };
       } else {
-        // Flux Image AI
         const width = document.getElementById('width').value;
         const height = document.getElementById('height').value;
         const seed = document.getElementById('seed').value;
@@ -134,26 +136,20 @@
 
       try {
         const response = await fetch(url, options);
-        if (!response.ok) {
-          throw new Error(`Network response was not ok: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-        // Determine how to handle the response
         const contentType = response.headers.get('Content-Type') || '';
         let imageSrc;
 
         if (contentType.includes('application/json')) {
           const data = await response.json();
           imageSrc = extractImageUrlFromJson(data);
-
-          // if we still didn't find a URL, fall back to blob
           if (!imageSrc) {
             console.warn('No URL in JSON, falling back to blob');
             const blob = await response.blob();
             imageSrc = URL.createObjectURL(blob);
           }
         } else {
-          // assume it's a raw image
           const blob = await response.blob();
           imageSrc = URL.createObjectURL(blob);
         }
