@@ -68,6 +68,22 @@
     apiSelect.addEventListener('change', toggleParams);
     toggleParams();
 
+    function extractImageUrlFromJson(data) {
+      // check all likely fields
+      const candidates = [
+        data.imageUrl,
+        data.resultUrl,
+        Array.isArray(data.output) && data.output[0],
+        data.url,
+        Array.isArray(data.urls) && data.urls[0],
+        Array.isArray(data.data) && data.data[0],
+        data.image,             // sometimes returned as ‘image’
+        data.img,               // or ‘img’
+        data.base64 && `data:image/png;base64,${data.base64}`, // if base64 payload
+      ];
+      return candidates.find(x => typeof x === 'string' && x.length > 0);
+    }
+
     document.getElementById('image-form').addEventListener('submit', async e => {
       e.preventDefault();
       resultEl.innerHTML = 'Generating...';
@@ -122,19 +138,22 @@
           throw new Error(`Network response was not ok: ${response.status}`);
         }
 
-        // Detect content type so we don't try to parse a blob as JSON
+        // Determine how to handle the response
         const contentType = response.headers.get('Content-Type') || '';
         let imageSrc;
 
         if (contentType.includes('application/json')) {
-          // API returned JSON with a URL inside
           const data = await response.json();
-          imageSrc = data.imageUrl || data.resultUrl || (data.output && data.output[0]);
+          imageSrc = extractImageUrlFromJson(data);
+
+          // if we still didn't find a URL, fall back to blob
           if (!imageSrc) {
-            throw new Error('No image URL found in JSON response.');
+            console.warn('No URL in JSON, falling back to blob');
+            const blob = await response.blob();
+            imageSrc = URL.createObjectURL(blob);
           }
         } else {
-          // API returned a raw image blob (JPEG/PNG/etc)
+          // assume it's a raw image
           const blob = await response.blob();
           imageSrc = URL.createObjectURL(blob);
         }
@@ -151,5 +170,4 @@
     });
   </script>
 </body>
-  </html>
-  
+</html>
