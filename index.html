@@ -47,7 +47,7 @@
 
       <div id="imageUrlContainer" style="display:none;">
         <label for="imageUrl">Source Image URL:</label>
-        <input type="text" id="imageUrl" placeholder="https://example.com/your-image.jpg" />
+        <input type="text" id="imageUrl" placeholder="https://upload.wikimedia.org/wikipedia/commons/a/a6/Anonymous_emblem.svg" />
       </div>
 
       <button type="submit" id="generateBtn">Generate Image</button>
@@ -101,7 +101,7 @@
         }
         url = 'https://cartoon-yourself.p.rapidapi.com/facebody/api/portrait-animation/portrait-animation';
         const body = new URLSearchParams();
-        body.append('image_url', imageUrl);
+        body.set('image_url', imageUrl); // Ensure only one entry
         options = {
           method: 'POST',
           headers: {
