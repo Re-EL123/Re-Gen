@@ -8,26 +8,33 @@
     body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 1rem; display: flex; justify-content: center; }
     .container { background: white; width: 100%; max-width: 800px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
     .tabs { display: flex; }
-    .tab { flex: 1; text-align: center; padding: 1rem; cursor: pointer; background: #eee; }
+    .tab { flex: 1; text-align: center; padding: 1rem; cursor: pointer; background: #eee; transition: background 0.3s; }
     .tab.active { background: #007bff; color: white; }
     .panel { display: none; padding: 1rem; }
     .panel.active { display: block; }
     .messages { max-height: 400px; overflow-y: auto; background: #fafafa; padding: 1rem; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 1rem; }
-    .message { margin-bottom: 0.75rem; }
+    .message { margin-bottom: 0.75rem; opacity: 0; transform: translateY(10px); animation: fadeIn 0.3s forwards; }
     .message.user { text-align: right; }
     .message.bot { text-align: left; }
     .bubble { display: inline-block; padding: 0.5rem 1rem; border-radius: 16px; max-width: 80%; }
     .message.user .bubble { background: #007bff; color: white; }
     .message.bot .bubble { background: #eee; color: #333; }
-    .timestamp { font-size: 0.75rem; color: #999; }
+    .timestamp { font-size: 0.75rem; color: #999; margin-top: 2px; }
     .input-area { display: flex; gap: 0.5rem; }
-    .input-area input[type="text"] { flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
-    .input-area button { padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #007bff; color: white; cursor: pointer; }
-    .input-area button:disabled { background: #aaa; }
+    .input-area input[type="text"] { flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; transition: border 0.3s; }
+    .input-area input[type="text"]:focus { border-color: #007bff; outline: none; }
+    .input-area button { padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #007bff; color: white; cursor: pointer; transition: background 0.3s; }
+    .input-area button:disabled { background: #aaa; cursor: not-allowed; }
+    .input-area button:hover:not(:disabled) { background: #0056b3; }
     /* Image panel styles */
     .result { text-align: center; }
-    .result img { max-width: 100%; border-radius: 8px; margin-top: 1rem; }
-    .download-btn { display: inline-block; margin-top: 0.5rem; text-decoration: none; background: #28a745; color: white; padding: 0.5rem 1rem; border-radius: 4px; }
+    .result img { max-width: 100%; border-radius: 8px; margin-top: 1rem; animation: fadeIn 0.5s; }
+    .download-btn { display: inline-block; margin-top: 0.5rem; text-decoration: none; background: #28a745; color: white; padding: 0.5rem 1rem; border-radius: 4px; transition: background 0.3s; }
+    .download-btn:hover { background: #1e7e34; }
+
+    @keyframes fadeIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
@@ -58,25 +65,17 @@
     const tabImage = document.getElementById('tab-image');
     const panelChat = document.getElementById('panel-chat');
     const panelImage = document.getElementById('panel-image');
-    tabChat.addEventListener('click', () => {
-      tabChat.classList.add('active'); tabImage.classList.remove('active');
-      panelChat.classList.add('active'); panelImage.classList.remove('active');
-    });
-    tabImage.addEventListener('click', () => {
-      tabImage.classList.add('active'); tabChat.classList.remove('active');
-      panelImage.classList.add('active'); panelChat.classList.remove('active');
-    });
+    [tabChat, tabImage].forEach(tab => tab.addEventListener('click', () => {
+      tabChat.classList.toggle('active', tab === tabChat);
+      tabImage.classList.toggle('active', tab === tabImage);
+      panelChat.classList.toggle('active', tab === tabChat);
+      panelImage.classList.toggle('active', tab === tabImage);
+    }));
 
-    // Chat functionality
+    // Chat functionality using XMLHttpRequest API
     const chatMessagesEl = document.getElementById('chatMessages');
     const chatInputEl = document.getElementById('chatInput');
     const chatSendBtn = document.getElementById('chatSendBtn');
-    const CHAT_API_URL = 'https://cheapest-gpt-4-turbo-gpt-4-vision-chatgpt-openai-ai-api.p.rapidapi.com/v1/chat/completions';
-    const HEADERS_CHAT = {
-      'Content-Type': 'application/json',
-      'x-rapidapi-host': 'cheapest-gpt-4-turbo-gpt-4-vision-chatgpt-openai-ai-api.p.rapidapi.com',
-      'x-rapidapi-key': '82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd'
-    };
     function appendChat(role, text) {
       const msg = document.createElement('div');
       msg.className = 'message ' + (role === 'user' ? 'user' : 'bot');
@@ -85,52 +84,52 @@
       const timeEl = document.createElement('div'); timeEl.className = 'timestamp'; timeEl.textContent = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
       msg.appendChild(timeEl);
       chatMessagesEl.appendChild(msg);
+      chatInputEl.value = '';
       chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
     }
-    chatSendBtn.addEventListener('click', async () => {
+    chatSendBtn.addEventListener('click', () => {
       const text = chatInputEl.value.trim(); if (!text) return;
-      appendChat('user', text); chatInputEl.value = '';
+      appendChat('user', text);
       chatSendBtn.disabled = true;
-      try {
-        const payload = { messages: [{ role: 'user', content: text }], model: 'gpt-4o', max_tokens: 150 };
-        const res = await fetch(CHAT_API_URL, { method: 'POST', headers: HEADERS_CHAT, body: JSON.stringify(payload) });
-        if (!res.ok) throw new Error(res.status);
-        const data = await res.json();
-        const reply = data.choices?.[0]?.message?.content || 'No response';
-        appendChat('bot', reply);
-      } catch (e) {
-        appendChat('bot', 'Error: ' + e.message);
-      }
-      chatSendBtn.disabled = false;
+      const xhr = new XMLHttpRequest();
+      xhr.withCredentials = true;
+      xhr.open('GET', 'https://chatgpt-4-01.p.rapidapi.com/ask?message=' + encodeURIComponent(text));
+      xhr.setRequestHeader('x-rapidapi-host', 'chatgpt-4-01.p.rapidapi.com');
+      xhr.setRequestHeader('x-rapidapi-key', '82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd');
+      xhr.onload = function() {
+        appendChat('bot', xhr.responseText || 'No response');
+        chatSendBtn.disabled = false;
+      };
+      xhr.onerror = function() {
+        appendChat('bot', 'Error communicating with API');
+        chatSendBtn.disabled = false;
+      };
+      xhr.send();
     });
-
     chatInputEl.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); chatSendBtn.click(); }});
 
-    // Image functionality
+    // Image functionality using fetch + Blob
     const imgPromptEl = document.getElementById('imgPrompt');
     const imgGenerateBtn = document.getElementById('imgGenerateBtn');
     const imgResultEl = document.getElementById('imgResult');
-    const FLUX_API_URL = 'https://ai-text-to-image-generator-flux-free-api.p.rapidapi.com/aaaaaaaaaaaaaaaaaiimagegenerator/fluximagegenerate/generateimage.php';
-    const HEADERS_FLUX = {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'x-rapidapi-host': 'ai-text-to-image-generator-flux-free-api.p.rapidapi.com',
-      'x-rapidapi-key': '82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd'
-    };
-    imgGenerateBtn.addEventListener('click', async () => {
+    imgGenerateBtn.addEventListener('click', () => {
       const prompt = imgPromptEl.value.trim(); if (!prompt) return;
-      imgResultEl.innerHTML = '';
-      imgGenerateBtn.disabled = true;
-      try {
-        const params = new URLSearchParams({ prompt, width:'1024', height:'1024', seed:'918440', model:'flux' });
-        const res = await fetch(FLUX_API_URL, { method: 'POST', headers: HEADERS_FLUX, body: params.toString() });
-        if (!res.ok) throw new Error(res.status);
-        const blob = await res.blob();
+      imgGenerateBtn.disabled = true; imgResultEl.innerHTML = '';
+      const params = new URLSearchParams({ prompt, width:'1024', height:'1024', seed:'918440', model:'flux' });
+      fetch('https://ai-text-to-image-generator-flux-free-api.p.rapidapi.com/aaaaaaaaaaaaaaaaaiimagegenerator/fluximagegenerate/generateimage.php', {
+        method: 'POST', headers: {
+          'Content-Type':'application/x-www-form-urlencoded',
+          'x-rapidapi-host':'ai-text-to-image-generator-flux-free-api.p.rapidapi.com',
+          'x-rapidapi-key':'82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd'
+        }, body: params.toString()
+      })
+      .then(r => r.blob())
+      .then(blob => {
         const url = URL.createObjectURL(blob);
         imgResultEl.innerHTML = `<img src="${url}" alt="Generated" /><br/><a href="${url}" download="generated.png" class="download-btn">Download Image</a>`;
-      } catch (e) {
-        imgResultEl.textContent = 'Error: ' + e.message;
-      }
-      imgGenerateBtn.disabled = false;
+      })
+      .catch(err => { imgResultEl.textContent = 'Error: ' + err.message; })
+      .finally(() => { imgGenerateBtn.disabled = false; });
     });
   </script>
 </body>
