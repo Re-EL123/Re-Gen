@@ -164,6 +164,7 @@
       vm.clearAll = function(){ vm.messages = []; vm.chatText=''; };
       vm.clearImage = function(){ vm.imgPrompt=''; vm.imgUrl=''; };
 
+      // Fixed sendChat to use correct Grok-2 endpoint
       vm.sendChat = function(){
         if(!vm.chatText) return;
         var userMsg = {role:'user', content: vm.chatText, ts:new Date()};
@@ -174,15 +175,21 @@
 
         $http({
           method:'POST',
-          url:'https://grok-2.p.rapidapi.com/ai-chat',
+          url:'https://grok-2-by-xai.p.rapidapi.com/',
           headers:{
             'Content-Type':'application/json',
-            'x-rapidapi-host':'grok-2.p.rapidapi.com',
+            'x-rapidapi-host':'grok-2-by-xai.p.rapidapi.com',
             'x-rapidapi-key':'82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd'
           },
-          data: { query: payload, temperature: vm.temperature }
+          data: {
+            temperature: vm.temperature,
+            model: 'Grok-2',
+            messages: [{ content: payload, role: 'user' }],
+            max_tokens: 2048
+          }
         }).then(function(res){
-          vm.messages.push({role:'bot', content: res.data.response || '(no reply)', ts:new Date()});
+          var botReply = res.data?.choices?.[0]?.message?.content || '(no reply)';
+          vm.messages.push({role:'bot', content: botReply, ts:new Date()});
         }).catch(function(err){
           vm.messages.push({role:'bot', content:'[Error: '+(err.statusText||'failed')+']', ts:new Date()});
         }).finally(function(){
