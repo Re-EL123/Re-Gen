@@ -164,7 +164,7 @@
       vm.clearAll = function(){ vm.messages = []; vm.chatText=''; };
       vm.clearImage = function(){ vm.imgPrompt=''; vm.imgUrl=''; };
 
-      // Fixed sendChat to use correct Grok-2 endpoint
+      // Robust sendChat function
       vm.sendChat = function(){
         if(!vm.chatText) return;
         var userMsg = {role:'user', content: vm.chatText, ts:new Date()};
@@ -188,7 +188,10 @@
             max_tokens: 2048
           }
         }).then(function(res){
-          var botReply = res.data?.choices?.[0]?.message?.content || '(no reply)';
+          console.log('Raw API response:', res.data);
+          var botReply = res.data?.choices?.[0]?.message?.content 
+                         || res.data?.response 
+                         || '(no reply)';
           vm.messages.push({role:'bot', content: botReply, ts:new Date()});
         }).catch(function(err){
           vm.messages.push({role:'bot', content:'[Error: '+(err.statusText||'failed')+']', ts:new Date()});
