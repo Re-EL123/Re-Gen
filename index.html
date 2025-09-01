@@ -103,7 +103,7 @@
       <div class="panel-head">
         <div>
           <div class="panel-title">{{ vm.mode === 'chat' ? 'AI Chat' : 'Image Generator' }}</div>
-          <div class="panel-sub">{{ vm.mode === 'chat' ? 'Grok-2 by xAI (RapidAPI) — XMLHttpRequest replaced with Angular $http' : 'Flux image generator (demo)' }}</div>
+          <div class="panel-sub">{{ vm.mode === 'chat' ? 'Grok-2 by xAI (RapidAPI) — $http' : 'Flux image generator (demo)' }}</div>
         </div>
         <div>
           <button class="btn" ng-click="vm.quickUplift()">Quick Uplifting Quote</button>
@@ -144,9 +144,72 @@
     </div>
   </div>
 
-  <!-- AngularJS Controller Script (unchanged, omitted here for brevity, same as your original) -->
+  <!-- AngularJS App -->
   <script>
-    // ... your existing AngularJS code ...
+    angular.module('regenApp', ['ngAnimate'])
+    .controller('MainCtrl', function($http, $timeout) {
+      var vm = this;
+      vm.mode = 'chat';
+      vm.username = '';
+      vm.temperature = 1;
+      vm.messages = [];
+      vm.chatText = '';
+      vm.loading = false;
+
+      vm.imgPrompt = '';
+      vm.imgUrl = '';
+      vm.imgLoading = false;
+
+      vm.switch = function(mode){ vm.mode = mode; };
+      vm.clearAll = function(){ vm.messages = []; vm.chatText=''; };
+      vm.clearImage = function(){ vm.imgPrompt=''; vm.imgUrl=''; };
+
+      vm.sendChat = function(){
+        if(!vm.chatText) return;
+        var userMsg = {role:'user', content: vm.chatText, ts:new Date()};
+        vm.messages.push(userMsg);
+        var payload = vm.chatText;
+        vm.chatText='';
+        vm.loading=true;
+
+        $http({
+          method:'POST',
+          url:'https://grok-2.p.rapidapi.com/',
+          headers:{
+            'Content-Type':'application/json',
+            'x-rapidapi-host':'grok-2.p.rapidapi.com',
+            'x-rapidapi-key':'YOUR_API_KEY'
+          },
+          data: { query: payload, temperature: vm.temperature }
+        }).then(function(res){
+          vm.messages.push({role:'bot', content: res.data.response || '(no reply)', ts:new Date()});
+        }).catch(function(err){
+          vm.messages.push({role:'bot', content:'[Error: '+(err.statusText||'failed')+']', ts:new Date()});
+        }).finally(function(){
+          vm.loading=false;
+        });
+      };
+
+      vm.quickUplift = function(){
+        vm.messages.push({role:'bot', content:'🌟 You are capable of amazing things. Keep going!', ts:new Date()});
+      };
+
+      vm.generateImage = function(){
+        if(!vm.imgPrompt) return;
+        vm.imgLoading=true;
+        $http.post('https://api-inference.huggingface.co/models/your-flux-model',{
+          inputs: vm.imgPrompt
+        },{
+          headers:{'Authorization':'Bearer YOUR_HF_TOKEN'}
+        }).then(function(res){
+          if(res.data && res.data.url){
+            vm.imgUrl=res.data.url;
+          }
+        }).catch(function(){
+          vm.imgUrl='';
+        }).finally(function(){ vm.imgLoading=false; });
+      };
+    });
   </script>
 </body>
 </html>
