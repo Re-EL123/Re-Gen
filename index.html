@@ -64,6 +64,9 @@
             { role: 'user', content: payload }
           ],
           temperature: parseFloat(vm.temperature),
+          top_p: 1,
+          frequency_penalty: 0,
+          presence_penalty: 0,
           max_tokens: 512
         };
 
@@ -77,6 +80,7 @@
           },
           data:data
         }).then(function(res){
+          // LLaMA response may be in res.data.response or res.data.choices[0].message.content
           var botReply = (res.data?.choices?.[0]?.message?.content) || res.data?.response || '(no reply)';
           vm.messages.push({role:'bot', content: botReply, ts:new Date()});
           scrollChat();
