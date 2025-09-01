@@ -1,136 +1,265 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="regenApp">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Re-Gen AI Chat & Image Generator</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 1rem; display: flex; justify-content: center; }
-    .container { background: white; width: 100%; max-width: 800px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    .tabs { display: flex; }
-    .tab { flex: 1; text-align: center; padding: 1rem; cursor: pointer; background: #eee; transition: background 0.3s; }
-    .tab.active { background: #007bff; color: white; }
-    .panel { display: none; padding: 1rem; }
-    .panel.active { display: block; }
-    .messages { max-height: 400px; overflow-y: auto; background: #fafafa; padding: 1rem; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 1rem; }
-    .message { margin-bottom: 0.75rem; opacity: 0; transform: translateY(10px); animation: fadeIn 0.3s forwards; }
-    .message.user { text-align: right; }
-    .message.bot { text-align: left; }
-    .bubble { display: inline-block; padding: 0.5rem 1rem; border-radius: 16px; max-width: 80%; }
-    .message.user .bubble { background: #007bff; color: white; }
-    .message.bot .bubble { background: #eee; color: #333; }
-    .timestamp { font-size: 0.75rem; color: #999; margin-top: 2px; }
-    .input-area { display: flex; gap: 0.5rem; }
-    .input-area input[type="text"] { flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; transition: border 0.3s; }
-    .input-area input[type="text"]:focus { border-color: #007bff; outline: none; }
-    .input-area button { padding: 0.5rem 1rem; border: none; border-radius: 4px; background: #007bff; color: white; cursor: pointer; transition: background 0.3s; }
-    .input-area button:disabled { background: #aaa; cursor: not-allowed; }
-    .input-area button:hover:not(:disabled) { background: #0056b3; }
-    /* Image panel styles */
-    .result { text-align: center; }
-    .result img { max-width: 100%; border-radius: 8px; margin-top: 1rem; animation: fadeIn 0.5s; }
-    .download-btn { display: inline-block; margin-top: 0.5rem; text-decoration: none; background: #28a745; color: white; padding: 0.5rem 1rem; border-radius: 4px; transition: background 0.3s; }
-    .download-btn:hover { background: #1e7e34; }
+  <!-- AngularJS + ngAnimate -->
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.3/angular.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.3/angular-animate.min.js"></script>
 
-    @keyframes fadeIn {
-      to { opacity: 1; transform: translateY(0); }
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --accent:#6ee7b7; --accent-2:#60a5fa; --muted:#94a3b8;
     }
+    *{box-sizing:border-box}
+    body{font-family:Inter,Segoe UI,Roboto,Arial; margin:0; min-height:100vh; background:linear-gradient(180deg,var(--bg),#071127); display:flex; align-items:center; justify-content:center; padding:24px;}
+
+    .container{width:100%; max-width:980px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:14px; overflow:hidden; box-shadow:0 10px 40px rgba(2,6,23,0.7); display:grid; grid-template-columns:360px 1fr; gap:0;}
+
+    /* Left column */
+    .sidebar{padding:20px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-right:1px solid rgba(255,255,255,0.03);}
+    .brand{display:flex; align-items:center; gap:12px; margin-bottom:12px}
+    .logo{width:48px; height:48px; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:0 6px 18px rgba(99,102,241,0.12); display:flex; align-items:center; justify-content:center; color:#041023; font-weight:700}
+    h1{font-size:18px; margin:0; color:#e6eef9}
+    p.lead{margin:6px 0 12px; color:var(--muted); font-size:13px}
+
+    .tabs{display:flex; gap:8px; margin-bottom:14px}
+    .tab-btn{flex:1; padding:10px 12px; border-radius:10px; cursor:pointer; text-align:center; background:transparent; border:1px solid rgba(255,255,255,0.03); color:var(--muted); transition:all .25s ease}
+    .tab-btn.active{background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); color:#e6eef9; box-shadow:0 6px 18px rgba(59,130,246,0.06); transform:translateY(-2px)}
+
+    .small{font-size:12px}
+    .controls{margin-top:8px; display:flex; gap:8px; flex-direction:column}
+    .input, .select, button{padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:#e6eef9}
+    .input::placeholder{color:rgba(230,238,249,0.35)}
+    .muted{color:var(--muted); font-size:12px}
+
+    /* Right panel */
+    .main{padding:18px}
+    .panel-head{display:flex; align-items:center; justify-content:space-between; gap:12px}
+    .panel-title{font-size:16px; color:#e6eef9}
+    .panel-sub{color:var(--muted); font-size:13px}
+
+    .messages{height:56vh; max-height:720px; overflow:auto; padding:16px; margin-top:14px; border-radius:12px; background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); border:1px solid rgba(255,255,255,0.03)}
+
+    .msg{display:flex; margin-bottom:12px; align-items:flex-end; opacity:0; transform:translateY(8px); transition:all .32s cubic-bezier(.2,.9,.2,1)}
+    .msg.ng-enter{opacity:0; transform:translateY(12px)}
+    .msg.ng-enter-active{opacity:1; transform:translateY(0)}
+
+    .msg.user{justify-content:flex-end}
+    .bubble{max-width:70%; padding:10px 14px; border-radius:14px; font-size:14px; line-height:1.3}
+    .bubble.user{background:linear-gradient(90deg,var(--accent-2),#3b82f6); color:white; border-bottom-right-radius:6px}
+    .bubble.bot{background:rgba(255,255,255,0.03); color:var(--muted); border-bottom-left-radius:6px}
+    .time{font-size:11px; color:rgba(230,238,249,0.4); margin-top:6px}
+
+    .input-area{display:flex; gap:10px; margin-top:12px}
+    .text-in{flex:1; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); background:#071226; color:#e6eef9}
+    .btn{padding:12px 16px; border-radius:12px; border:none; cursor:pointer; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#041023; font-weight:600}
+    .btn[disabled]{opacity:.5; cursor:not-allowed}
+
+    /* image result */
+    .image-panel{margin-top:12px}
+    .result img{max-width:100%; border-radius:12px; display:block}
+    .download-btn{display:inline-block; margin-top:8px; padding:8px 12px; border-radius:10px; background:#10b981; color:white; text-decoration:none}
+
+    /* small screens */
+    @media(max-width:900px){.container{grid-template-columns:1fr;}.sidebar{order:2}.main{order:1}}
+
+    /* fancy micro animation */
+    .pulse{animation:pulse 2s infinite}
+    @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(99,102,241,0.12)}70%{box-shadow:0 0 0 18px rgba(99,102,241,0)}100%{box-shadow:0 0 0 0 rgba(99,102,241,0)}}
+
   </style>
 </head>
-<body>
+<body ng-controller="MainCtrl as vm">
   <div class="container">
-    <div class="tabs">
-      <div class="tab active" id="tab-chat">Chat</div>
-      <div class="tab" id="tab-image">Image</div>
-    </div>
-    <!-- Chat Panel -->
-    <div class="panel active" id="panel-chat">
-      <div class="messages" id="chatMessages"></div>
-      <div class="input-area">
-        <input type="text" id="chatInput" placeholder="Type a message..." />
-        <button id="chatSendBtn">Send Chat</button>
+    <div class="sidebar">
+      <div class="brand">
+        <div class="logo">RG</div>
+        <div>
+          <h1>Re‑Gen</h1>
+          <p class="lead">AI Chat & Image — Grok-2 + Flux</p>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab-btn" ng-class="{active: vm.mode==='chat'}" ng-click="vm.switch('chat')">Chat</div>
+        <div class="tab-btn" ng-class="{active: vm.mode==='image'}" ng-click="vm.switch('image')">Image</div>
+      </div>
+
+      <div class="controls">
+        <input class="input" ng-model="vm.username" placeholder="Your name (optional)" />
+        <select class="select" ng-model="vm.temperature">
+          <option value="0.2">Creative: 0.2</option>
+          <option value="0.5">Balanced: 0.5</option>
+          <option value="1" selected>Exploratory: 1</option>
+        </select>
+        <div class="muted small">API Key and host are baked into this demo — replace with your own for production.</div>
+        <button class="btn pulse" ng-click="vm.clearAll()">Clear Conversation</button>
       </div>
     </div>
-    <!-- Image Panel -->
-    <div class="panel" id="panel-image">
-      <input type="text" id="imgPrompt" placeholder="Enter image prompt..." style="width:100%; margin-bottom:0.5rem; padding:0.5rem; border:1px solid #ccc; border-radius:4px;" />
-      <button id="imgGenerateBtn" style="width:100%; margin-bottom:1rem;">Generate Image</button>
-      <div class="result" id="imgResult"></div>
+
+    <div class="main">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">{{ vm.mode === 'chat' ? 'AI Chat' : 'Image Generator' }}</div>
+          <div class="panel-sub">{{ vm.mode === 'chat' ? 'Grok-2 by xAI (RapidAPI) — XMLHttpRequest replaced with Angular $http' : 'Flux image generator (demo)' }}</div>
+        </div>
+        <div>
+          <button class="btn" ng-click="vm.quickUplift()">Quick Uplifting Quote</button>
+        </div>
+      </div>
+
+      <!-- CHAT PANEL -->
+      <div ng-show="vm.mode==='chat'">
+        <div class="messages" id="chatMessages">
+          <div ng-repeat="m in vm.messages track by $index" class="msg" ng-class="{'user': m.role==='user'}" ng-animate="'animate'">
+            <div class="bubble" ng-class="{'user': m.role==='user','bot': m.role==='bot'}">{{ m.content }}</div>
+            <div class="time">{{ m.ts | date:'shortTime' }}</div>
+          </div>
+        </div>
+
+        <div class="input-area">
+          <input class="text-in" ng-model="vm.chatText" placeholder="Type a message and press Enter or Send" ng-keydown="$event.keyCode===13 && vm.sendChat()" />
+          <button class="btn" ng-disabled="!vm.chatText || vm.loading" ng-click="vm.sendChat()">{{ vm.loading ? 'Thinking...' : 'Send' }}</button>
+        </div>
+      </div>
+
+      <!-- IMAGE PANEL -->
+      <div ng-show="vm.mode==='image'">
+        <div class="image-panel">
+          <input class="text-in" ng-model="vm.imgPrompt" placeholder="Enter image prompt..." />
+          <div style="display:flex; gap:8px; margin-top:8px">
+            <button class="btn" ng-click="vm.generateImage()" ng-disabled="!vm.imgPrompt || vm.imgLoading">{{ vm.imgLoading ? 'Generating...' : 'Generate Image' }}</button>
+            <button class="btn" ng-click="vm.clearImage()">Clear</button>
+          </div>
+
+          <div class="result" style="margin-top:12px" ng-if="vm.imgUrl">
+            <img ng-src="{{vm.imgUrl}}" alt="generated" />
+            <a class="download-btn" ng-href="{{vm.imgUrl}}" download="generated.png">Download Image</a>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <script>
-    // Tab switching
-    const tabChat = document.getElementById('tab-chat');
-    const tabImage = document.getElementById('tab-image');
-    const panelChat = document.getElementById('panel-chat');
-    const panelImage = document.getElementById('panel-image');
-    [tabChat, tabImage].forEach(tab => tab.addEventListener('click', () => {
-      tabChat.classList.toggle('active', tab === tabChat);
-      tabImage.classList.toggle('active', tab === tabImage);
-      panelChat.classList.toggle('active', tab === tabChat);
-      panelImage.classList.toggle('active', tab === tabImage);
-    }));
+    angular.module('regenApp', ['ngAnimate'])
+      .controller('MainCtrl', ['$http', '$sce', '$timeout', function($http, $sce, $timeout){
+        const vm = this;
+        vm.mode = 'chat';
+        vm.temperature = 1;
+        vm.username = '';
+        vm.messages = [];
+        vm.chatText = '';
+        vm.loading = false;
+        vm.imgPrompt = '';
+        vm.imgLoading = false;
+        vm.imgUrl = '';
 
-    // Chat functionality using XMLHttpRequest API
-    const chatMessagesEl = document.getElementById('chatMessages');
-    const chatInputEl = document.getElementById('chatInput');
-    const chatSendBtn = document.getElementById('chatSendBtn');
-    function appendChat(role, text) {
-      const msg = document.createElement('div');
-      msg.className = 'message ' + (role === 'user' ? 'user' : 'bot');
-      const bubble = document.createElement('div'); bubble.className = 'bubble'; bubble.textContent = text;
-      msg.appendChild(bubble);
-      const timeEl = document.createElement('div'); timeEl.className = 'timestamp'; timeEl.textContent = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-      msg.appendChild(timeEl);
-      chatMessagesEl.appendChild(msg);
-      chatInputEl.value = '';
-      chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-    }
-    chatSendBtn.addEventListener('click', () => {
-      const text = chatInputEl.value.trim(); if (!text) return;
-      appendChat('user', text);
-      chatSendBtn.disabled = true;
-      const xhr = new XMLHttpRequest();
-      xhr.withCredentials = true;
-      xhr.open('GET', 'https://chatgpt-4-01.p.rapidapi.com/ask?message=' + encodeURIComponent(text));
-      xhr.setRequestHeader('x-rapidapi-host', 'chatgpt-4-01.p.rapidapi.com');
-      xhr.setRequestHeader('x-rapidapi-key', '82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd');
-      xhr.onload = function() {
-        appendChat('bot', xhr.responseText || 'No response');
-        chatSendBtn.disabled = false;
-      };
-      xhr.onerror = function() {
-        appendChat('bot', 'Error communicating with API');
-        chatSendBtn.disabled = false;
-      };
-      xhr.send();
-    });
-    chatInputEl.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); chatSendBtn.click(); }});
+        vm.switch = function(mode){ vm.mode = mode; };
 
-    // Image functionality using fetch + Blob
-    const imgPromptEl = document.getElementById('imgPrompt');
-    const imgGenerateBtn = document.getElementById('imgGenerateBtn');
-    const imgResultEl = document.getElementById('imgResult');
-    imgGenerateBtn.addEventListener('click', () => {
-      const prompt = imgPromptEl.value.trim(); if (!prompt) return;
-      imgGenerateBtn.disabled = true; imgResultEl.innerHTML = '';
-      const params = new URLSearchParams({ prompt, width:'1024', height:'1024', seed:'918440', model:'flux' });
-      fetch('https://ai-text-to-image-generator-flux-free-api.p.rapidapi.com/aaaaaaaaaaaaaaaaaiimagegenerator/fluximagegenerate/generateimage.php', {
-        method: 'POST', headers: {
-          'Content-Type':'application/x-www-form-urlencoded',
-          'x-rapidapi-host':'ai-text-to-image-generator-flux-free-api.p.rapidapi.com',
-          'x-rapidapi-key':'82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd'
-        }, body: params.toString()
-      })
-      .then(r => r.blob())
-      .then(blob => {
-        const url = URL.createObjectURL(blob);
-        imgResultEl.innerHTML = `<img src="${url}" alt="Generated" /><br/><a href="${url}" download="generated.png" class="download-btn">Download Image</a>`;
-      })
-      .catch(err => { imgResultEl.textContent = 'Error: ' + err.message; })
-      .finally(() => { imgGenerateBtn.disabled = false; });
-    });
+        vm.clearAll = function(){ vm.messages = []; vm.chatText=''; vm.imgUrl=''; };
+        vm.clearImage = function(){ vm.imgPrompt=''; vm.imgUrl=''; };
+
+        vm.append = function(role, content){ vm.messages.push({role:role, content:content, ts:new Date()}); $timeout(()=>{const el=document.getElementById('chatMessages'); if(el) el.scrollTop = el.scrollHeight;},50); };
+
+        // QUICK UPLIFT uses the Grok-2 request (the user-supplied JSON body)
+        vm.quickUplift = function(){
+          const payload = {
+            temperature: Number(vm.temperature) || 1,
+            model: 'Grok-2',
+            messages: [{ content: 'Give me a random uplifting quote', role: 'user' }],
+            max_tokens: 2048
+          };
+          vm.loading = true;
+          vm.append('user', 'Give me a random uplifting quote');
+
+          // Use XMLHttpRequest exactly like user wanted but wrapped so Angular knows about it
+          const data = JSON.stringify(payload);
+          const xhr = new XMLHttpRequest();
+          xhr.withCredentials = true;
+          xhr.addEventListener('readystatechange', function () {
+            if (this.readyState === this.DONE) {
+              try{
+                // try parse json else use text
+                let text = this.responseText;
+                try{ const j = JSON.parse(text); if(j && (j.choices || j.output || j.data || j.response)){
+                  // attempt to extract a reasonable text field
+                  text = JSON.stringify(j);
+                  if(j.output && typeof j.output === 'string') text = j.output;
+                  else if(j.choices && j.choices[0] && j.choices[0].message) text = j.choices[0].message.content || JSON.stringify(j.choices[0]);
+                }}catch(e){}
+                vm.append('bot', text);
+              }catch(err){ vm.append('bot','Error parsing response'); }
+              vm.loading = false;
+            }
+          });
+
+          xhr.open('POST', 'https://grok-2-by-xai.p.rapidapi.com/');
+          xhr.setRequestHeader('x-rapidapi-key', '82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd');
+          xhr.setRequestHeader('x-rapidapi-host', 'grok-2-by-xai.p.rapidapi.com');
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          xhr.send(data);
+        };
+
+        // SEND CHAT: use Grok-2 with user's text
+        vm.sendChat = function(){
+          if(!vm.chatText) return;
+          const userText = vm.chatText.trim();
+          vm.append('user', userText);
+          vm.chatText = '';
+          vm.loading = true;
+
+          const payload = {
+            temperature: Number(vm.temperature) || 1,
+            model: 'Grok-2',
+            messages: [{ content: userText, role: 'user' }],
+            max_tokens: 2048
+          };
+
+          const data = JSON.stringify(payload);
+          const xhr = new XMLHttpRequest();
+          xhr.withCredentials = true;
+          xhr.addEventListener('readystatechange', function () {
+            if (this.readyState === this.DONE) {
+              let text = this.responseText || 'No response';
+              try{ const j = JSON.parse(text); // best effort extraction
+                if(j.output && typeof j.output === 'string') text = j.output;
+                else if(j.choices && j.choices[0] && j.choices[0].message) text = j.choices[0].message.content || JSON.stringify(j.choices[0]);
+                else if(j.response) text = j.response;
+              }catch(e){}
+              vm.append('bot', text);
+              vm.loading = false;
+            }
+          });
+          xhr.open('POST', 'https://grok-2-by-xai.p.rapidapi.com/');
+          xhr.setRequestHeader('x-rapidapi-key', '82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd');
+          xhr.setRequestHeader('x-rapidapi-host', 'grok-2-by-xai.p.rapidapi.com');
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          xhr.send(data);
+        };
+
+        // IMAGE generation kept similar to original but using fetch and vm bindings
+        vm.generateImage = function(){
+          if(!vm.imgPrompt) return;
+          vm.imgLoading = true; vm.imgUrl = '';
+          const params = new URLSearchParams({ prompt: vm.imgPrompt, width:'1024', height:'1024', seed:'918440', model:'flux' });
+          fetch('https://ai-text-to-image-generator-flux-free-api.p.rapidapi.com/aaaaaaaaaaaaaaaaaiimagegenerator/fluximagegenerate/generateimage.php', {
+            method: 'POST', headers: {
+              'Content-Type':'application/x-www-form-urlencoded',
+              'x-rapidapi-host':'ai-text-to-image-generator-flux-free-api.p.rapidapi.com',
+              'x-rapidapi-key':'82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd'
+            }, body: params.toString()
+          })
+          .then(r => r.blob())
+          .then(blob => { vm.imgUrl = URL.createObjectURL(blob); })
+          .catch(err => { alert('Image generation error: ' + (err.message||err)); })
+          .finally(()=>{ vm.imgLoading = false; });
+        };
+
+      }]);
   </script>
 </body>
 </html>
