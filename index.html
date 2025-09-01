@@ -77,7 +77,7 @@
       <div class="brand">
         <div class="logo">RG</div>
         <div>
-          <h1>Re‑Gen</h1>
+          <h1>Re-Gen</h1>
           <p class="lead">AI Chat & Image — Grok-2 + Flux</p>
         </div>
       </div>
@@ -165,7 +165,7 @@
 
         vm.append = function(role, content){ vm.messages.push({role:role, content:content, ts:new Date()}); $timeout(()=>{const el=document.getElementById('chatMessages'); if(el) el.scrollTop = el.scrollHeight;},50); };
 
-        // QUICK UPLIFT uses the Grok-2 request (the user-supplied JSON body)
+        // QUICK UPLIFT uses the Grok-2 request (fetch)
         vm.quickUplift = function(){
           const payload = {
             temperature: Number(vm.temperature) || 1,
@@ -174,41 +174,50 @@
             max_tokens: 2048
           };
           vm.loading = true;
-          vm.append('user', 'Give me a random uplifting quote');
+          // show user's prompt in chat
+          $timeout(()=> vm.append('user', 'Give me a random uplifting quote'), 0);
 
-          // Use XMLHttpRequest exactly like user wanted but wrapped so Angular knows about it
-          const data = JSON.stringify(payload);
-          const xhr = new XMLHttpRequest();
-          xhr.withCredentials = true;
-          xhr.addEventListener('readystatechange', function () {
-            if (this.readyState === this.DONE) {
+          (async function(){
+            const url = 'https://grok-2-by-xai.p.rapidapi.com/';
+            const options = {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'x-rapidapi-key': '82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd',
+                'x-rapidapi-host': 'grok-2-by-xai.p.rapidapi.com',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(payload)
+            };
+            try {
+              const response = await fetch(url, options);
+              const textRaw = await response.text();
+              let text = textRaw || 'No response';
               try{
-                // try parse json else use text
-                let text = this.responseText;
-                try{ const j = JSON.parse(text); if(j && (j.choices || j.output || j.data || j.response)){
-                  // attempt to extract a reasonable text field
-                  text = JSON.stringify(j);
-                  if(j.output && typeof j.output === 'string') text = j.output;
-                  else if(j.choices && j.choices[0] && j.choices[0].message) text = j.choices[0].message.content || JSON.stringify(j.choices[0]);
-                }}catch(e){}
-                vm.append('bot', text);
-              }catch(err){ vm.append('bot','Error parsing response'); }
+                const j = JSON.parse(textRaw);
+                // best-effort extraction
+                if(j.output && typeof j.output === 'string') text = j.output;
+                else if(j.choices && j.choices[0] && j.choices[0].message) text = j.choices[0].message.content || JSON.stringify(j.choices[0]);
+                else if(j.response) text = j.response;
+                else if(typeof j === 'object') text = JSON.stringify(j);
+              }catch(e){}
+              // append bot reply in Angular digest
+              $timeout(()=> vm.append('bot', text), 0);
+            } catch (err) {
+              $timeout(()=> vm.append('bot', 'Error communicating with API'), 0);
+            } finally {
               vm.loading = false;
+              // ensure UI updates
+              $timeout(()=>{}, 0);
             }
-          });
-
-          xhr.open('POST', 'https://grok-2-by-xai.p.rapidapi.com/');
-          xhr.setRequestHeader('x-rapidapi-key', '82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd');
-          xhr.setRequestHeader('x-rapidapi-host', 'grok-2-by-xai.p.rapidapi.com');
-          xhr.setRequestHeader('Content-Type', 'application/json');
-          xhr.send(data);
+          })();
         };
 
-        // SEND CHAT: use Grok-2 with user's text
+        // SEND CHAT: use Grok-2 with user's text via fetch
         vm.sendChat = function(){
           if(!vm.chatText) return;
           const userText = vm.chatText.trim();
-          vm.append('user', userText);
+          $timeout(() => vm.append('user', userText), 0);
           vm.chatText = '';
           vm.loading = true;
 
@@ -219,26 +228,37 @@
             max_tokens: 2048
           };
 
-          const data = JSON.stringify(payload);
-          const xhr = new XMLHttpRequest();
-          xhr.withCredentials = true;
-          xhr.addEventListener('readystatechange', function () {
-            if (this.readyState === this.DONE) {
-              let text = this.responseText || 'No response';
-              try{ const j = JSON.parse(text); // best effort extraction
+          (async function(){
+            const url = 'https://grok-2-by-xai.p.rapidapi.com/';
+            const options = {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'x-rapidapi-key': '82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd',
+                'x-rapidapi-host': 'grok-2-by-xai.p.rapidapi.com',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(payload)
+            };
+            try {
+              const response = await fetch(url, options);
+              const textRaw = await response.text();
+              let text = textRaw || 'No response';
+              try{
+                const j = JSON.parse(textRaw);
                 if(j.output && typeof j.output === 'string') text = j.output;
                 else if(j.choices && j.choices[0] && j.choices[0].message) text = j.choices[0].message.content || JSON.stringify(j.choices[0]);
                 else if(j.response) text = j.response;
+                else if(typeof j === 'object') text = JSON.stringify(j);
               }catch(e){}
-              vm.append('bot', text);
+              $timeout(()=> vm.append('bot', text), 0);
+            } catch (err) {
+              $timeout(()=> vm.append('bot', 'Error communicating with API'), 0);
+            } finally {
               vm.loading = false;
+              $timeout(()=>{}, 0);
             }
-          });
-          xhr.open('POST', 'https://grok-2-by-xai.p.rapidapi.com/');
-          xhr.setRequestHeader('x-rapidapi-key', '82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd');
-          xhr.setRequestHeader('x-rapidapi-host', 'grok-2-by-xai.p.rapidapi.com');
-          xhr.setRequestHeader('Content-Type', 'application/json');
-          xhr.send(data);
+          })();
         };
 
         // IMAGE generation kept similar to original but using fetch and vm bindings
