@@ -60,7 +60,7 @@
         <div class="logo">RG</div>
         <div>
           <h1>Re-Gen</h1>
-          <p class="lead">AI Chat & Image — Grok-2 + Flux</p>
+          <p class="lead">AI Chat & Image — GPT-4o + Flux</p>
         </div>
       </div>
 
@@ -85,7 +85,7 @@
       <div class="panel-head">
         <div>
           <div class="panel-title">{{ vm.mode === 'chat' ? 'AI Chat' : 'Image Generator' }}</div>
-          <div class="panel-sub">{{ vm.mode === 'chat' ? 'Grok-2 by xAI (RapidAPI) — $http' : 'Flux image generator (demo)' }}</div>
+          <div class="panel-sub">{{ vm.mode === 'chat' ? 'GPT-4o via Azure OpenAI (RapidAPI)' : 'Flux image generator (demo)' }}</div>
         </div>
         <div>
           <button class="btn" ng-click="vm.quickUplift()">Quick Uplifting Quote</button>
@@ -124,7 +124,7 @@
 
   <script>
     angular.module('regenApp', ['ngAnimate'])
-    .controller('MainCtrl', function($http, $timeout, $scope) {
+    .controller('MainCtrl', function($http, $timeout) {
       var vm = this;
       vm.mode = 'chat';
       vm.username = '';
@@ -157,32 +157,31 @@
         vm.loading=true;
         scrollChat();
 
+        const url = 'https://azure-openai-api-gpt-4o.p.rapidapi.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-08-01-preview';
+        const data = {
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant.' },
+            { role: 'user', content: payload }
+          ],
+          temperature: vm.temperature,
+          max_tokens: 2048
+        };
+
         $http({
           method:'POST',
-          url:'https://grok-2-by-xai.p.rapidapi.com/',
+          url:url,
           headers:{
             'Content-Type':'application/json',
-            'x-rapidapi-host':'grok-2-by-xai.p.rapidapi.com',
+            'x-rapidapi-host':'azure-openai-api-gpt-4o.p.rapidapi.com',
             'x-rapidapi-key':'82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd'
           },
-          data: {
-            temperature: vm.temperature,
-            model: 'Grok-2',
-            messages: [{ content: payload, role: 'user' }],
-            max_tokens: 2048
-          }
+          data:data
         }).then(function(res){
-          var botReply = res.data?.choices?.[0]?.message?.content 
-                         || res.data?.response 
-                         || '(no reply)';
+          var botReply = res.data?.choices?.[0]?.message?.content || '(no reply)';
           vm.messages.push({role:'bot', content: botReply, ts:new Date()});
           scrollChat();
         }).catch(function(err){
-          if(err.status === 429){
-            vm.messages.push({role:'bot', content:'[Error: Rate limit exceeded. Please wait a moment]', ts:new Date()});
-          } else {
-            vm.messages.push({role:'bot', content:'[Error: '+(err.statusText||'failed')+']', ts:new Date()});
-          }
+          vm.messages.push({role:'bot', content:'[Error: '+(err.statusText||'failed')+']', ts:new Date()});
           scrollChat();
         }).finally(function(){
           vm.loading=false;
