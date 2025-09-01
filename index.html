@@ -88,8 +88,8 @@
       </div>
 
       <div class="controls">
-        <input class="input" ng-model="vm.username" placeholder="Your name (optional)" />
-        <select class="select" ng-model="vm.temperature">
+        <input id="username" name="username" class="input" ng-model="vm.username" placeholder="Your name (optional)" />
+        <select id="temperature" name="temperature" class="select" ng-model="vm.temperature">
           <option value="0.2">Creative: 0.2</option>
           <option value="0.5">Balanced: 0.5</option>
           <option value="1" selected>Exploratory: 1</option>
@@ -120,7 +120,7 @@
         </div>
 
         <div class="input-area">
-          <input class="text-in" ng-model="vm.chatText" placeholder="Type a message and press Enter or Send" ng-keydown="$event.keyCode===13 && vm.sendChat()" />
+          <input id="chatText" name="chatText" class="text-in" ng-model="vm.chatText" placeholder="Type a message and press Enter or Send" ng-keydown="$event.keyCode===13 && vm.sendChat()" />
           <button class="btn" ng-disabled="!vm.chatText || vm.loading" ng-click="vm.sendChat()">{{ vm.loading ? 'Thinking...' : 'Send' }}</button>
         </div>
       </div>
@@ -128,7 +128,7 @@
       <!-- IMAGE PANEL -->
       <div ng-show="vm.mode==='image'">
         <div class="image-panel">
-          <input class="text-in" ng-model="vm.imgPrompt" placeholder="Enter image prompt..." />
+          <input id="imgPrompt" name="imgPrompt" class="text-in" ng-model="vm.imgPrompt" placeholder="Enter image prompt..." />
           <div style="display:flex; gap:8px; margin-top:8px">
             <button class="btn" ng-click="vm.generateImage()" ng-disabled="!vm.imgPrompt || vm.imgLoading">{{ vm.imgLoading ? 'Generating...' : 'Generate Image' }}</button>
             <button class="btn" ng-click="vm.clearImage()">Clear</button>
