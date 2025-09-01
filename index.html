@@ -7,7 +7,7 @@
   <!-- AngularJS + ngAnimate -->
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.3/angular.min.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.3/angular-animate.min.js"></script>
-<style> :root{ --bg:#0f1724; --card:#0b1220; --accent:#6ee7b7; --accent-2:#60a5fa; --muted:#94a3b8; } *{box-sizing:border-box} body{font-family:Inter,Segoe UI,Roboto,Arial; margin:0; min-height:100vh; background:linear-gradient(180deg,var(--bg),#071127); display:flex; align-items:center; justify-content:center; padding:24px;} .container{width:100%; max-width:980px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:14px; overflow:hidden; box-shadow:0 10px 40px rgba(2,6,23,0.7); display:grid; grid-template-columns:360px 1fr; gap:0;} .sidebar{padding:20px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-right:1px solid rgba(255,255,255,0.03);} .brand{display:flex; align-items:center; gap:12px; margin-bottom:12px} .logo{width:48px; height:48px; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:0 6px 18px rgba(99,102,241,0.12); display:flex; align-items:center; justify-content:center; color:#041023; font-weight:700} h1{font-size:18px; margin:0; color:#e6eef9} p.lead{margin:6px 0 12px; color:var(--muted); font-size:13px} .tabs{display:flex; gap:8px; margin-bottom:14px} .tab-btn{flex:1; padding:10px 12px; border-radius:10px; cursor:pointer; text-align:center; background:transparent; border:1px solid rgba(255,255,255,0.03); color:var(--muted); transition:all .25s ease} .tab-btn.active{background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); color:#e6eef9; box-shadow:0 6px 18px rgba(59,130,246,0.06); transform:translateY(-2px)} .small{font-size:12px} .controls{margin-top:8px; display:flex; gap:8px; flex-direction:column} .input, .select, button{padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:#e6eef9} .input::placeholder{color:rgba(230,238,249,0.35)} .muted{color:var(--muted); font-size:12px} .main{padding:18px} .panel-head{display:flex; align-items:center; justify-content:space-between; gap:12px} .panel-title{font-size:16px; color:#e6eef9} .panel-sub{color:var(--muted); font-size:13px} .messages{height:56vh; max-height:720px; overflow:auto; padding:16px; margin-top:14px; border-radius:12px; background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); border:1px solid rgba(255,255,255,0.03)} .msg{display:flex; margin-bottom:12px; align-items:flex-end; opacity:0; transform:translateY(8px); transition:all .32s cubic-bezier(.2,.9,.2,1)} .msg.ng-enter{opacity:0; transform:translateY(12px)} .msg.ng-enter-active{opacity:1; transform:translateY(0)} .msg.user{justify-content:flex-end} .bubble{max-width:70%; padding:10px 14px; border-radius:14px; font-size:14px; line-height:1.3} .bubble.user{background:linear-gradient(90deg,var(--accent-2),#3b82f6); color:white; border-bottom-right-radius:6px} .bubble.bot{background:rgba(255,255,255,0.03); color:var(--muted); border-bottom-left-radius:6px} .time{font-size:11px; color:rgba(230,238,249,0.4); margin-top:6px} .input-area{display:flex; gap:10px; margin-top:12px} .text-in{flex:1; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); background:#071226; color:#e6eef9} .btn{padding:12px 16px; border-radius:12px; border:none; cursor:pointer; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#041023; font-weight:600} .btn[disabled]{opacity:.5; cursor:not-allowed} .image-panel{margin-top:12px} .result img{max-width:100%; border-radius:12px; display:block} .download-btn{display:inline-block; margin-top:8px; padding:8px 12px; border-radius:10px; background:#10b981; color:white; text-decoration:none} @media(max-width:900px){.container{grid-template-columns:1fr;}.sidebar{order:2}.main{order:1}} .pulse{animation:pulse 2s infinite} @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(99,102,241,0.12)}70%{box-shadow:0 0 0 18px rgba(99,102,241,0)}100%{box-shadow:0 0 0 0 rgba(99,102,241,0)}} </style>
+  <style> :root{ --bg:#0f1724; --card:#0b1220; --accent:#6ee7b7; --accent-2:#60a5fa; --muted:#94a3b8; } *{box-sizing:border-box} body{font-family:Inter,Segoe UI,Roboto,Arial; margin:0; min-height:100vh; background:linear-gradient(180deg,var(--bg),#071127); display:flex; align-items:center; justify-content:center; padding:24px;} .container{width:100%; max-width:980px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:14px; overflow:hidden; box-shadow:0 10px 40px rgba(2,6,23,0.7); display:grid; grid-template-columns:360px 1fr; gap:0;} .sidebar{padding:20px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-right:1px solid rgba(255,255,255,0.03);} .brand{display:flex; align-items:center; gap:12px; margin-bottom:12px} .logo{width:48px; height:48px; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--accent-2)); box-shadow:0 6px 18px rgba(99,102,241,0.12); display:flex; align-items:center; justify-content:center; color:#041023; font-weight:700} h1{font-size:18px; margin:0; color:#e6eef9} p.lead{margin:6px 0 12px; color:var(--muted); font-size:13px} .tabs{display:flex; gap:8px; margin-bottom:14px} .tab-btn{flex:1; padding:10px 12px; border-radius:10px; cursor:pointer; text-align:center; background:transparent; border:1px solid rgba(255,255,255,0.03); color:var(--muted); transition:all .25s ease} .tab-btn.active{background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)); color:#e6eef9; box-shadow:0 6px 18px rgba(59,130,246,0.06); transform:translateY(-2px)} .small{font-size:12px} .controls{margin-top:8px; display:flex; gap:8px; flex-direction:column} .input, .select, button{padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:#e6eef9} .input::placeholder{color:rgba(230,238,249,0.35)} .muted{color:var(--muted); font-size:12px} .main{padding:18px} .panel-head{display:flex; align-items:center; justify-content:space-between; gap:12px} .panel-title{font-size:16px; color:#e6eef9} .panel-sub{color:var(--muted); font-size:13px} .messages{height:56vh; max-height:720px; overflow:auto; padding:16px; margin-top:14px; border-radius:12px; background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); border:1px solid rgba(255,255,255,0.03)} .msg{display:flex; margin-bottom:12px; align-items:flex-end; opacity:0; transform:translateY(8px); transition:all .32s cubic-bezier(.2,.9,.2,1)} .msg.ng-enter{opacity:0; transform:translateY(12px)} .msg.ng-enter-active{opacity:1; transform:translateY(0)} .msg.user{justify-content:flex-end} .bubble{max-width:70%; padding:10px 14px; border-radius:14px; font-size:14px; line-height:1.3} .bubble.user{background:linear-gradient(90deg,var(--accent-2),#3b82f6); color:white; border-bottom-right-radius:6px} .bubble.bot{background:rgba(255,255,255,0.03); color:var(--muted); border-bottom-left-radius:6px} .time{font-size:11px; color:rgba(230,238,249,0.4); margin-top:6px} .input-area{display:flex; gap:10px; margin-top:12px} .text-in{flex:1; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); background:#071226; color:#e6eef9} .btn{padding:12px 16px; border-radius:12px; border:none; cursor:pointer; background:linear-gradient(90deg,var(--accent),var(--accent-2)); color:#041023; font-weight:600} .btn[disabled]{opacity:.5; cursor:not-allowed} .image-panel{margin-top:12px} .result img{max-width:100%; border-radius:12px; display:block} .download-btn{display:inline-block; margin-top:8px; padding:8px 12px; border-radius:10px; background:#10b981; color:white; text-decoration:none} @media(max-width:900px){.container{grid-template-columns:1fr;}.sidebar{order:2}.main{order:1}} .pulse{animation:pulse 2s infinite} @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(99,102,241,0.12)}70%{box-shadow:0 0 0 18px rgba(99,102,241,0)}100%{box-shadow:0 0 0 0 rgba(99,102,241,0)}} </style>
 </head>
 <body ng-controller="MainCtrl as vm">
   <div class="container">
@@ -16,7 +16,7 @@
         <div class="logo">RG</div>
         <div>
           <h1>Re-Gen</h1>
-          <p class="lead">AI Chat & Image — LLaMA + Flux</p>
+          <p class="lead">AI Chat & Image — Hugging Face + Flux</p>
         </div>
       </div>
 
@@ -32,7 +32,7 @@
           <option value="0.5">Balanced: 0.5</option>
           <option value="1" selected>Exploratory: 1</option>
         </select>
-        <div class="muted small">API Key and host are baked into this demo — replace with your own for production.</div>
+        <div class="muted small">Hugging Face free model demo — replace HF_TOKEN with your own for production.</div>
         <button class="btn pulse" ng-click="vm.clearAll()">Clear Conversation</button>
       </div>
     </div>
@@ -41,7 +41,7 @@
       <div class="panel-head">
         <div>
           <div class="panel-title">{{ vm.mode === 'chat' ? 'AI Chat' : 'Image Generator' }}</div>
-          <div class="panel-sub">{{ vm.mode === 'chat' ? 'LLaMA via RapidAPI' : 'Flux image generator (demo)' }}</div>
+          <div class="panel-sub">{{ vm.mode === 'chat' ? 'Hugging Face Chat Model' : 'Flux image generator (demo)' }}</div>
         </div>
         <div>
           <button class="btn" ng-click="vm.quickUplift()">Quick Uplifting Quote</button>
@@ -104,7 +104,26 @@
         }, 50);
       }
 
-      vm.sendChat = function(){
+      // Hugging Face API wrapper
+      async function queryHF(data){
+        try{
+          const response = await fetch("https://api-inference.huggingface.co/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": "Bearer YOUR_HF_TOKEN",  // replace with your token
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+          });
+          const result = await response.json();
+          return result;
+        }catch(err){
+          console.error(err);
+          return { error: true };
+        }
+      }
+
+      vm.sendChat = async function(){
         if(!vm.chatText || vm.loading) return;
         var userMsg = {role:'user', content: vm.chatText, ts:new Date()};
         vm.messages.push(userMsg);
@@ -113,38 +132,19 @@
         vm.loading=true;
         scrollChat();
 
-        const url = 'https://llama-3-2-3b1.p.rapidapi.com/chat_completions';
         const data = {
+          model: "openai/gpt-oss-120b:together",  // free HF model
           messages: [
-            { role: 'system', content: 'You are a helpful assistant.' },
-            { role: 'user', content: payload }
+            { role: "user", content: payload }
           ],
-          frequency_penalty: 0,
-          presence_penalty: 0,
-          temperature: parseFloat(vm.temperature),
-          top_p: 1,
-          max_tokens: 512
+          temperature: parseFloat(vm.temperature)
         };
 
-        $http({
-          method:'POST',
-          url:url,
-          headers:{
-            'Content-Type':'application/json',
-            'x-rapidapi-host':'llama-3-2-3b1.p.rapidapi.com',
-            'x-rapidapi-key':'82ae10db11mshb41ccacdd991130p108a22jsnf3ae22b94bbd'
-          },
-          data:data
-        }).then(function(res){
-          var botReply = (res.data?.choices?.[0]?.message?.content) || res.data?.response || '(no reply)';
-          vm.messages.push({role:'bot', content: botReply, ts:new Date()});
-          scrollChat();
-        }).catch(function(err){
-          vm.messages.push({role:'bot', content:'[Error: '+(err.statusText||err.status||'failed')+']', ts:new Date()});
-          scrollChat();
-        }).finally(function(){
-          vm.loading=false;
-        });
+        const res = await queryHF(data);
+        var botReply = res?.choices?.[0]?.message?.content || res?.response || '(no reply)';
+        vm.messages.push({role:'bot', content: botReply, ts:new Date()});
+        scrollChat();
+        vm.loading=false;
       };
 
       vm.quickUplift = function(){
